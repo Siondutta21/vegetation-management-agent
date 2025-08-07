@@ -717,23 +717,15 @@
             </div>
         </div>
         
-        <div id="line-details" class="line-details" style="display: none;">
-            <div class="line-details-header">
-                <h4>📋 Line Details</h4>
-                <div class="line-type-badge" id="line-type-badge"></div>
-            </div>
-            <div id="line-info" class="line-info-content"></div>
-            
-            <div class="action-buttons">
-                <button class="btn btn-primary enhanced-btn" onclick="generateRiskReport()">
-                    <span class="btn-icon">📊</span>
-                    <span class="btn-text">Risk Report</span>
-                </button>
-                <button class="btn btn-warning enhanced-btn" onclick="generatePDFReport()">
-                    <span class="btn-icon">📄</span>
-                    <span class="btn-text">PDF Report</span>
-                </button>
-            </div>
+        <div class="action-buttons" style="margin-top: 20px;">
+            <button class="btn btn-primary enhanced-btn" onclick="generateRiskReport()">
+                <span class="btn-icon">📊</span>
+                <span class="btn-text">Report Generator</span>
+            </button>
+            <button class="btn btn-warning enhanced-btn" onclick="generatePDFReport()">
+                <span class="btn-icon">📄</span>
+                <span class="btn-text">Export PDF</span>
+            </button>
         </div>
         
         <div id="risk-summary" style="margin-top: 20px;">
@@ -832,11 +824,18 @@
                 </div>
 
                 <div class="card">
-                    <h3>📏 Distance Analysis</h3>
+                    <h3>📋 Line Details</h3>
+                    <div id="line-details" class="line-details" style="display: none;">
+                        <div class="line-details-header">
+                            <h4>📋 Line Details</h4>
+                            <div class="line-type-badge" id="line-type-badge"></div>
+                        </div>
+                        <div id="line-info" class="line-info-content"></div>
+                    </div>
                     <div id="distance-analysis-content">
                         <div class="loading">
                             <div class="spinner"></div>
-                            <p>Analyzing distances...</p>
+                            <p>Select a power line to view details...</p>
                         </div>
                     </div>
                 </div>
@@ -951,13 +950,19 @@
             const statusText = statusElement?.querySelector('.status-text');
             
             try {
-                const response = await fetch(`${apiBaseUrl}/health`, {
+                // Create a timeout promise
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Timeout')), 5000);
+                });
+                
+                const fetchPromise = fetch(`${apiBaseUrl}/health`, {
                     method: 'GET',
                     headers: {
                         'Content-Type': 'application/json',
-                    },
-                    timeout: 5000
+                    }
                 });
+                
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
                 
                 if (response.ok) {
                     const data = await response.json();
@@ -1002,14 +1007,20 @@
             }
 
             try {
-                const response = await fetch(`${apiBaseUrl}/${endpoint}`, {
+                // Create a timeout promise
+                const timeoutPromise = new Promise((_, reject) => {
+                    setTimeout(() => reject(new Error('Timeout')), 10000);
+                });
+                
+                const fetchPromise = fetch(`${apiBaseUrl}/${endpoint}`, {
                     method: data ? 'POST' : 'GET',
                     headers: {
                         'Content-Type': 'application/json',
                     },
-                    body: data ? JSON.stringify(data) : undefined,
-                    timeout: 10000
+                    body: data ? JSON.stringify(data) : undefined
                 });
+                
+                const response = await Promise.race([fetchPromise, timeoutPromise]);
                 
                 if (response.ok) {
                     return await response.json();
@@ -1024,6 +1035,8 @@
         }
 
         async function getVegetationAnalysis(lineId, lineData) {
+            console.log('🔍 Attempting API vegetation analysis for:', lineId);
+            
             const apiData = await callPythonAPI('detect_vegetation', {
                 line_id: lineId,
                 line_data: lineData,
@@ -1032,9 +1045,11 @@
             });
             
             if (apiData && apiData.vegetation_data) {
+                console.log('✅ API vegetation analysis successful:', apiData.vegetation_data.length, 'points');
                 return apiData.vegetation_data;
             }
             
+            console.log('⚠️ API vegetation analysis failed, using fallback');
             // Fallback to local analysis
             return generateVegetationData(lineId);
         }
@@ -1361,6 +1376,9 @@
         
         // Initialize dashboard
         document.addEventListener('DOMContentLoaded', async function() {
+            console.log('🌳 Vegetation Management Agent - Loading...');
+            console.log('🔧 API Base URL:', apiBaseUrl);
+            
             // Check API connection first
             await checkApiConnection();
             
@@ -1380,6 +1398,28 @@
             } else {
                 showNotification('⚠️ Using local analysis (Python backend unavailable)', 'warning');
             }
+            
+            // Add manual API test function to window for debugging
+            window.testApiConnection = async function() {
+                console.log('🧪 Manual API connection test...');
+                const result = await checkApiConnection();
+                console.log('API connection result:', result);
+                return result;
+            };
+            
+            // Add force refresh function
+            window.forceRefresh = function() {
+                console.log('🔄 Force refreshing page...');
+                window.location.reload(true);
+            };
+            
+            // Add API status check
+            window.checkApiStatus = function() {
+                console.log('📊 API Status Check:');
+                console.log('- isApiConnected:', isApiConnected);
+                console.log('- apiBaseUrl:', apiBaseUrl);
+                console.log('- API Status Element:', document.getElementById('api-status'));
+            };
         });
 
         // Load transmission line data
@@ -1583,7 +1623,7 @@
                 const lines = currentLineType === 'transmission' ? transmissionLines : distributionLines;
                 const line = lines.find(l => l.id === selectedLineId);
                 displayLineDetails(line);
-                // Don't automatically load vegetation data - wait for user to click Risk Report
+                // Don't automatically load vegetation data - wait for user to click Report Generator
                 setTimeout(() => {
                 updateMap();
                 }, 100);
@@ -1895,10 +1935,10 @@
                             </div>
                         `;
                     } else {
-                        content.innerHTML = '<div class="no-data-message"><p>📊 Click "Risk Report" to generate vegetation analysis</p></div>';
+                        content.innerHTML = '<div class="no-data-message"><p>📊 Click "Report Generator" to generate vegetation analysis</p></div>';
                     }
                 } else {
-                    content.innerHTML = '<div class="no-data-message"><p>📊 Click "Risk Report" to generate vegetation analysis</p></div>';
+                    content.innerHTML = '<div class="no-data-message"><p>📊 Click "Report Generator" to generate vegetation analysis</p></div>';
                 }
                 return;
             }
@@ -1985,13 +2025,13 @@
                             </div>
                         `;
                     } else {
-                        content.innerHTML = '<div class="no-data-message"><p>⚠️ Click "Risk Report" to generate risk assessment</p></div>';
-                        highRiskContent.innerHTML = '<div class="no-data-message"><p>🚨 Click "Risk Report" to identify high-risk vegetation</p></div>';
+                        content.innerHTML = '<div class="no-data-message"><p>⚠️ Click "Report Generator" to generate risk assessment</p></div>';
+                        highRiskContent.innerHTML = '<div class="no-data-message"><p>🚨 Click "Report Generator" to identify high-risk vegetation</p></div>';
                     }
-                } else {
-                    content.innerHTML = '<div class="no-data-message"><p>⚠️ Click "Risk Report" to generate risk assessment</p></div>';
-                    highRiskContent.innerHTML = '<div class="no-data-message"><p>🚨 Click "Risk Report" to identify high-risk vegetation</p></div>';
-                }
+                                    } else {
+                        content.innerHTML = '<div class="no-data-message"><p>⚠️ Click "Report Generator" to generate risk assessment</p></div>';
+                        highRiskContent.innerHTML = '<div class="no-data-message"><p>🚨 Click "Report Generator" to identify high-risk vegetation</p></div>';
+                    }
                 return;
             }
             
@@ -2061,7 +2101,7 @@
             const scheduleContent = document.getElementById('maintenance-schedule-content');
             
             if (vegetationData.length === 0) {
-                content.innerHTML = '<div class="no-data-message"><p>📈 Click "Risk Report" to generate growth prediction</p></div>';
+                content.innerHTML = '<div class="no-data-message"><p>📈 Click "Report Generator" to generate growth prediction</p></div>';
                 return;
             }
             
@@ -2460,14 +2500,14 @@
             }
         }
 
-        // Generate risk report
+        // Generate report
         function generateRiskReport() {
             if (!selectedLineId) {
                 showNotification('Please select a power line first', 'warning');
                 return;
             }
             
-            showNotification('Generating risk report...', 'info');
+            showNotification('Generating report...', 'info');
             
             // Load vegetation data and update all analysis sections
             setTimeout(() => {
@@ -2477,7 +2517,7 @@
                 updateGrowthPrediction();
                 
                 const lineTypeText = currentLineType === 'transmission' ? 'transmission' : 'distribution';
-                showNotification(`${lineTypeText.charAt(0).toUpperCase() + lineTypeText.slice(1)} risk report generated successfully!`, 'success');
+                showNotification(`${lineTypeText.charAt(0).toUpperCase() + lineTypeText.slice(1)} report generated successfully!`, 'success');
             }, 1000);
         }
 
@@ -2489,11 +2529,11 @@
             }
             
             if (vegetationData.length === 0) {
-                showNotification('No risk report data available. Please generate a risk report first.', 'warning');
+                showNotification('No report data available. Please generate a report first.', 'warning');
                 return;
             }
             
-            showNotification('Generating PDF report...', 'info');
+            showNotification('Generating PDF...', 'info');
             
             // Generate a proper PDF using jsPDF library
             setTimeout(() => {
@@ -2512,7 +2552,7 @@
                     // Save the PDF
                     doc.save(filename);
                     
-                    showNotification('PDF report generated and downloaded!', 'success');
+                    showNotification('PDF exported successfully!', 'success');
                 } catch (error) {
                     showNotification('Error generating PDF: ' + error.message, 'error');
                 }
@@ -2658,11 +2698,11 @@
             }
             
             if (vegetationData.length === 0) {
-                showNotification('No risk report data to refresh. Please generate a risk report first.', 'warning');
+                showNotification('No report data to refresh. Please generate a report first.', 'warning');
                 return;
             }
             
-            showNotification('Refreshing risk report data...', 'info');
+            showNotification('Refreshing report data...', 'info');
             
             setTimeout(() => {
                 // Regenerate vegetation data and update all analysis sections
@@ -2672,7 +2712,7 @@
                 updateGrowthPrediction();
                 updateMap(); // Update map with new vegetation points
                 
-                showNotification('Risk report data refreshed successfully!', 'success');
+                showNotification('Report data refreshed successfully!', 'success');
             }, 1000);
         }
 
