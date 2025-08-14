@@ -1,0 +1,12 @@
+services:
+  - type: web
+    name: vegetation-management-agent
+    env: python
+    plan: free
+    buildCommand: pip install -r requirements_render.txt
+    startCommand: python simple_backend.py
+    envVars:
+      - key: PYTHON_VERSION
+        value: 3.12.0
+      - key: PORT
+        value: 8000 

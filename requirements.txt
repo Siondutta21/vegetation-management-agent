@@ -1,0 +1,317 @@
+# Core Framework
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Data Processing - Python 3.13 Compatible
+pandas>=2.2.0
+numpy>=1.26.0
+scikit-learn>=1.4.0
+
+# AI/ML Libraries - Python 3.13 Compatible
+torch>=2.2.0
+torchvision>=0.17.0
+transformers>=4.37.0
+sentence-transformers>=2.3.0
+
+# Computer Vision
+Pillow==10.1.0
+opencv-python==4.8.1.78
+
+# Geospatial
+geopandas==0.14.1
+folium==0.15.0
+shapely==2.0.2
+pyproj==3.6.1
+rasterio==1.3.8
+
+# Web Scraping & APIs
+requests==2.31.0
+aiohttp==3.9.1
+beautifulsoup4==4.12.2
+
+# Database
+sqlalchemy==2.0.23
+psycopg2-binary==2.9.9
+redis==5.0.1
+alembic==1.13.0
+
+# Enterprise Integration
+zeep==4.2.1
+suds-jurko==0.7
+
+# Optimization
+pulp==2.7.0
+ortools==9.8.3296
+scipy==1.11.4
+
+# Visualization
+plotly==5.17.0
+matplotlib==3.8.2
+seaborn==0.13.0
+streamlit==1.28.2
+reportlab==4.0.4
+
+# Monitoring & Logging
+prometheus-client==0.19.0
+structlog==23.2.0
+loguru==0.7.2
+
+# Testing
+pytest==7.4.3
+pytest-asyncio==0.21.1
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+factory-boy==3.3.0
+
+# Development Tools
+black==23.11.0
+flake8==6.1.0
+mypy==1.7.1
+pre-commit==3.6.0
+
+# Security
+cryptography==41.0.8
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Utilities
+python-dotenv==1.0.0
+pyyaml==6.0.1
+click==8.1.7
+rich==13.7.0
+tqdm==4.66.1
+psutil==5.9.6
+
+# Async Support
+aiofiles==23.2.1
+
+# Time Series
+statsmodels==0.14.0
+
+# NLP
+spacy==3.7.2
+nltk==3.8.1
+textblob==0.17.1
+
+# Reinforcement Learning
+gymnasium==0.29.1
+stable-baselines3==2.1.0
+
+# Weather & Climate
+xarray==2023.11.0
+netcdf4==1.6.5
+
+# Image Processing
+scikit-image==0.22.0
+imageio==2.33.0
+
+# API Documentation
+swagger-ui-bundle==0.0.9
+
+# Caching
+diskcache==5.6.3
+
+# Configuration
+dynaconf==3.2.4
+
+# Validation
+marshmallow==3.20.1
+
+# Serialization
+orjson==3.9.10
+
+# HTTP Client
+httpx==0.25.2
+
+# Background Tasks
+celery==5.3.4
+
+# Web Framework Extensions
+fastapi-cors==0.0.6
+fastapi-limiter==0.1.5
+
+# Environment Management
+python-decouple==3.8
+
+# File Processing
+python-multipart==0.0.6
+
+# Date/Time
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Math & Statistics
+sympy==1.12
+
+# Network Analysis
+networkx==3.2.1
+
+# GIS & Mapping
+fiona==1.9.5
+geopy==2.4.0
+
+# Machine Learning Utilities
+imbalanced-learn==0.11.0
+lightgbm==4.1.0
+xgboost==2.0.2
+
+# Deep Learning
+tensorflow==2.15.0
+keras==2.15.0
+
+# Model Serving
+mlflow==2.8.1
+
+# Data Validation
+great-expectations==0.18.19
+
+# Workflow Management
+prefect==2.14.8
+
+# Monitoring
+sentry-sdk[fastapi]==1.38.0
+
+# Performance
+uvloop==0.19.0
+
+# Compression
+python-snappy==0.6.1
+
+# Serialization
+msgpack==1.0.7
+
+# Rate Limiting
+slowapi==0.1.9
+
+# Background Jobs
+rq==1.15.1
+
+# WebSocket Support
+websockets==12.0
+
+# GraphQL Support
+strawberry-graphql==0.214.0
+
+# API Versioning
+fastapi-versioning==0.10.0
+
+# Health Checks
+healthcheck==1.3.5
+
+# Metrics
+datadog==0.44.0
+
+# Error Tracking
+sentry-sdk[fastapi]==1.38.0
+
+# Caching
+aioredis==2.0.1
+
+# Task Queue
+celery[redis]==5.3.4
+
+# PDF Processing
+PyPDF2==3.0.1
+reportlab==4.0.7
+
+# Excel Processing
+openpyxl==3.1.2
+xlrd==2.0.1
+
+# JSON Processing
+ujson==5.8.0
+
+# XML Processing
+lxml==4.9.3
+xmltodict==0.13.0
+
+# Email
+aiosmtplib==3.0.1
+
+# SMS
+twilio==8.10.0
+
+# Push Notifications
+pushbullet.py==0.12.0
+
+# Calendar
+icalendar==5.0.7
+
+# QR Codes
+qrcode[pil]==7.4.2
+
+# Barcodes
+python-barcode==0.15.1
+
+# OCR
+pytesseract==0.3.10
+
+# Speech Recognition
+SpeechRecognition==3.10.0
+
+# Text-to-Speech
+pyttsx3==2.90
+
+# Audio Processing
+librosa==0.10.1
+
+# Video Processing
+moviepy==1.0.3
+
+# Web Scraping
+scrapy==2.11.0
+
+# Browser Automation
+playwright==1.40.0
+
+# API Testing
+httpx==0.25.2
+
+# Load Testing
+locust==2.17.0
+
+# Security Testing
+bandit==1.7.5
+safety==2.3.5
+
+# Code Quality
+pylint==3.0.3
+autopep8==2.0.4
+
+# Documentation
+sphinx==7.2.6
+sphinx-rtd-theme==1.3.0
+myst-parser==2.0.0
+
+# Jupyter Support
+jupyter==1.0.0
+ipykernel==6.27.1
+
+# Development Server
+watchdog==3.0.0
+
+# Environment Management
+conda==23.11.0
+
+# Package Management
+pip-tools==7.3.0
+
+# Virtual Environment
+virtualenv==20.25.0
+
+# Process Management
+supervisor==4.2.5
+
+# System Monitoring
+psutil==5.9.6
+
+# Network Utilities
+netifaces==0.11.0
+
+# Compression
+gzip==1.0.0
+
+# Encryption
+pycryptodome==3.19.0 

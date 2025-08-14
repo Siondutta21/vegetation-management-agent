@@ -1,0 +1,27 @@
+# Render Deployment - Python 3.13 Compatible Requirements
+# This file ensures compatibility with Render's Python 3.13 environment
+
+# Core Framework
+fastapi>=0.104.1
+uvicorn[standard]>=0.24.0
+pydantic>=2.5.0
+
+# Data Processing - Python 3.13 Compatible
+pandas>=2.2.0
+numpy>=1.26.0
+
+# Web and API
+requests>=2.31.0
+python-multipart>=0.0.6
+
+# Utilities
+python-dotenv>=1.0.0
+pyyaml>=6.0.1
+
+# CORS Support for Web Deployment
+fastapi-cors>=0.0.6
+
+# Optional ML Libraries (Python 3.13 Compatible)
+# scikit-learn>=1.4.0
+# plotly>=5.17.0
+# matplotlib>=3.8.2 

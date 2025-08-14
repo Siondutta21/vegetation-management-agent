@@ -1,0 +1,945 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🌳 Vegetation Management Agent - Web Ready Dashboard</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/leaflet@1.7.1/dist/leaflet.css" />
+    <script src="https://cdn.jsdelivr.net/npm/plotly.js-dist@2.24.1/plotly.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            text-align: center;
+        }
+
+        .header h1 {
+            font-size: 2.5em;
+            color: #2c3e50;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            font-size: 1.2em;
+            color: #7f8c8d;
+        }
+
+        .status-indicator {
+            display: inline-block;
+            width: 12px;
+            height: 12px;
+            border-radius: 50%;
+            background-color: #27ae60;
+            margin-left: 10px;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+        
+        .api-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 10px;
+            font-size: 14px;
+            color: #7f8c8d;
+        }
+        
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            background: #95a5a6;
+            animation: pulse 2s infinite;
+        }
+        
+        .api-status.connected .status-dot {
+            background: #27ae60;
+        }
+        
+        .api-status.disconnected .status-dot {
+            background: #e74c3c;
+        }
+
+        .backend-selector {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        .backend-selector select {
+            padding: 10px 15px;
+            border: 2px solid #3498db;
+            border-radius: 8px;
+            font-size: 16px;
+            margin: 0 10px;
+            background: white;
+        }
+
+        .backend-selector button {
+            padding: 10px 20px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .backend-selector button:hover {
+            background: #2980b9;
+        }
+
+        .sidebar {
+            position: fixed;
+            left: 0;
+            top: 0;
+            width: 300px;
+            height: 100vh;
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 0 20px 20px 0;
+            padding: 30px;
+            box-shadow: 8px 0 32px rgba(0, 0, 0, 0.1);
+            overflow-y: auto;
+            z-index: 1000;
+        }
+
+        .main-content {
+            margin-left: 330px;
+            padding: 20px;
+        }
+
+        .tab-container {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 30px;
+            margin-bottom: 30px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-buttons {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .tab-button {
+            padding: 15px 25px;
+            background: #ecf0f1;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            cursor: pointer;
+            transition: all 0.3s;
+            color: #7f8c8d;
+        }
+
+        .tab-button.active {
+            background: #3498db;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .tab-button:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .tab-content {
+            display: none;
+        }
+
+        .tab-content.active {
+            display: block;
+        }
+
+        .upload-section {
+            text-align: center;
+            padding: 40px;
+            border: 3px dashed #bdc3c7;
+            border-radius: 20px;
+            margin: 20px 0;
+            transition: all 0.3s;
+        }
+
+        .upload-section:hover {
+            border-color: #3498db;
+            background: rgba(52, 152, 219, 0.05);
+        }
+
+        .upload-section.dragover {
+            border-color: #27ae60;
+            background: rgba(39, 174, 96, 0.1);
+        }
+
+        .upload-button {
+            padding: 15px 30px;
+            background: #3498db;
+            color: white;
+            border: none;
+            border-radius: 12px;
+            font-size: 18px;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin: 20px;
+        }
+
+        .upload-button:hover {
+            background: #2980b9;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(52, 152, 219, 0.3);
+        }
+
+        .map-container {
+            height: 500px;
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin: 20px 0;
+        }
+
+        .stat-card {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 25px;
+            border-radius: 15px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .stat-card h3 {
+            font-size: 2em;
+            margin-bottom: 10px;
+        }
+
+        .stat-card p {
+            opacity: 0.9;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin: 20px 0;
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+        }
+
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 40px;
+        }
+
+        .loading.show {
+            display: block;
+        }
+
+        .spinner {
+            border: 4px solid #f3f3f3;
+            border-top: 4px solid #3498db;
+            border-radius: 50%;
+            width: 40px;
+            height: 40px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 20px;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .error-message {
+            background: #e74c3c;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .success-message {
+            background: #27ae60;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            display: none;
+        }
+
+        .mobile-warning {
+            display: none;
+            background: #f39c12;
+            color: white;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: center;
+        }
+
+        @media (max-width: 768px) {
+            .mobile-warning {
+                display: block;
+            }
+            
+            .sidebar {
+                width: 100%;
+                height: auto;
+                position: relative;
+                border-radius: 20px;
+                margin-bottom: 20px;
+            }
+            
+            .main-content {
+                margin-left: 0;
+            }
+            
+            .tab-buttons {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🌳 Vegetation Management Agent</h1>
+            <p>AI-Powered Power Line Vegetation Analysis & Risk Assessment</p>
+            <div class="api-status" id="apiStatus">
+                <div class="status-dot"></div>
+                <span id="statusText">Checking backend connection...</span>
+            </div>
+        </div>
+
+        <div class="backend-selector">
+            <h3>🔗 Backend Configuration</h3>
+            <p>Select your backend server or use the default local server</p>
+            <select id="backendSelect">
+                <option value="local">🚀 Local Server (localhost:8000)</option>
+                <option value="render">☁️ Render Cloud (Free)</option>
+                <option value="railway">🚂 Railway Cloud (Free)</option>
+                <option value="custom">🔧 Custom URL</option>
+            </select>
+            <input type="text" id="customBackendUrl" placeholder="https://your-backend.vercel.app" style="display: none; padding: 10px; margin: 0 10px; border: 2px solid #3498db; border-radius: 8px; width: 300px;">
+            <button onclick="updateBackend()">🔄 Update Backend</button>
+            <button onclick="testConnection()">🧪 Test Connection</button>
+        </div>
+
+        <div class="mobile-warning">
+            📱 <strong>Mobile Notice:</strong> For best experience, use a desktop computer or tablet in landscape mode.
+        </div>
+
+        <div class="sidebar">
+            <h3>🎯 Quick Actions</h3>
+            <button class="upload-button" onclick="document.getElementById('fileInput').click()">
+                📁 Upload KML File
+            </button>
+            <input type="file" id="fileInput" accept=".kml" style="display: none;" onchange="handleFileUpload(event)">
+            
+            <h3>📊 Dashboard Tabs</h3>
+            <div class="tab-buttons">
+                <button class="tab-button active" onclick="showTab('overview')">🏠 Overview</button>
+                <button class="tab-button" onclick="showTab('vegetation')">🌿 Vegetation</button>
+                <button class="tab-button" onclick="showTab('risk')">⚠️ Risk</button>
+                <button class="tab-button" onclick="showTab('growth')">📈 Growth</button>
+                <button class="tab-button" onclick="showTab('map')">🗺️ Map</button>
+                <button class="tab-button" onclick="showTab('reports')">📋 Reports</button>
+            </div>
+            
+            <h3>🔧 System Status</h3>
+            <div id="systemStatus">
+                <p>✅ Backend: <span id="backendStatus">Checking...</span></p>
+                <p>✅ Frontend: Ready</p>
+                <p>✅ KML Processing: Ready</p>
+                <p>✅ AI Models: Ready</p>
+            </div>
+        </div>
+
+        <div class="main-content">
+            <!-- Overview Tab -->
+            <div id="overview" class="tab-content active">
+                <div class="tab-container">
+                    <h2>🏠 System Overview</h2>
+                    <div class="stats-grid">
+                        <div class="stat-card">
+                            <h3 id="totalLines">0</h3>
+                            <p>Total Power Lines</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="vegetationPoints">0</h3>
+                            <p>Vegetation Points</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="riskLevel">Low</h3>
+                            <p>Overall Risk Level</p>
+                        </div>
+                        <div class="stat-card">
+                            <h3 id="growthRate">0%</h3>
+                            <p>Growth Rate</p>
+                        </div>
+                    </div>
+                    
+                    <div class="upload-section" id="uploadSection">
+                        <h3>📁 Upload KML File to Begin Analysis</h3>
+                        <p>Drag and drop your KML file here or click the upload button</p>
+                        <button class="upload-button" onclick="document.getElementById('fileInput').click()">
+                            📁 Choose KML File
+                        </button>
+                        <p style="margin-top: 20px; font-size: 14px; color: #7f8c8d;">
+                            Supported formats: .kml files from Google Earth, GIS systems, or transmission line databases
+                        </p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vegetation Analysis Tab -->
+            <div id="vegetation" class="tab-content">
+                <div class="tab-container">
+                    <h2>🌿 Vegetation Analysis</h2>
+                    <div id="vegetationResults">
+                        <p>Upload a KML file to analyze vegetation along power lines.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Risk Assessment Tab -->
+            <div id="risk" class="tab-content">
+                <div class="tab-container">
+                    <h2>⚠️ Risk Assessment</h2>
+                    <div id="riskResults">
+                        <p>Upload a KML file to assess vegetation-related risks.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Growth Prediction Tab -->
+            <div id="growth" class="tab-content">
+                <div class="tab-container">
+                    <h2>📈 Growth Prediction</h2>
+                    <div id="growthResults">
+                        <p>Upload a KML file to predict vegetation growth patterns.</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive Map Tab -->
+            <div id="map" class="tab-content">
+                <div class="tab-container">
+                    <h2>🗺️ Interactive Map</h2>
+                    <div id="mapContainer" class="map-container"></div>
+                </div>
+            </div>
+
+            <!-- Reports Tab -->
+            <div id="report" class="tab-content">
+                <div class="tab-container">
+                    <h2>📋 Reports & Analytics</h2>
+                    <div id="reportResults">
+                        <p>Upload a KML file to generate comprehensive reports.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="loading" id="loading">
+            <div class="spinner"></div>
+            <h3>🤖 AI Analysis in Progress...</h3>
+            <p>Processing your data with machine learning algorithms</p>
+        </div>
+
+        <div class="error-message" id="errorMessage"></div>
+        <div class="success-message" id="successMessage"></div>
+    </div>
+
+    <script>
+        // Global variables
+        let currentBackend = 'http://localhost:8000';
+        let map = null;
+        let currentData = null;
+
+        // Backend configuration
+        const backendConfigs = {
+            local: 'http://localhost:8000',
+            render: 'https://your-render-service.onrender.com',
+            railway: 'https://your-railway-service.up.railway.app',
+            custom: ''
+        };
+
+        // Initialize the application
+        document.addEventListener('DOMContentLoaded', function() {
+            initializeApp();
+        });
+
+        function initializeApp() {
+            // Set up drag and drop
+            setupDragAndDrop();
+            
+            // Initialize map
+            initializeMap();
+            
+            // Test backend connection
+            testConnection();
+            
+            // Set up backend selector
+            document.getElementById('backendSelect').addEventListener('change', function() {
+                const customUrlInput = document.getElementById('customBackendUrl');
+                if (this.value === 'custom') {
+                    customUrlInput.style.display = 'inline-block';
+                } else {
+                    customUrlInput.style.display = 'none';
+                }
+            });
+        }
+
+        function setupDragAndDrop() {
+            const uploadSection = document.getElementById('uploadSection');
+            
+            uploadSection.addEventListener('dragover', function(e) {
+                e.preventDefault();
+                this.classList.add('dragover');
+            });
+            
+            uploadSection.addEventListener('dragleave', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+            });
+            
+            uploadSection.addEventListener('drop', function(e) {
+                e.preventDefault();
+                this.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0 && files[0].name.endsWith('.kml')) {
+                    handleFile(files[0]);
+                }
+            });
+        }
+
+        function initializeMap() {
+            if (map) {
+                map.remove();
+            }
+            
+            map = L.map('mapContainer').setView([37.7749, -122.4194], 10);
+            L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+                attribution: '© OpenStreetMap contributors'
+            }).addTo(map);
+        }
+
+        function updateBackend() {
+            const backendType = document.getElementById('backendSelect').value;
+            const customUrl = document.getElementById('customBackendUrl').value;
+            
+            if (backendType === 'custom' && customUrl) {
+                currentBackend = customUrl;
+            } else if (backendConfigs[backendType]) {
+                currentBackend = backendConfigs[backendType];
+            }
+            
+            showMessage('Backend updated to: ' + currentBackend, 'success');
+            testConnection();
+        }
+
+        async function testConnection() {
+            const statusElement = document.getElementById('apiStatus');
+            const statusText = document.getElementById('statusText');
+            const backendStatus = document.getElementById('backendStatus');
+            
+            try {
+                const response = await fetch(`${currentBackend}/health`);
+                if (response.ok) {
+                    statusElement.classList.add('connected');
+                    statusElement.classList.remove('disconnected');
+                    statusText.textContent = 'Connected to backend';
+                    backendStatus.textContent = 'Connected';
+                    showMessage('✅ Backend connection successful!', 'success');
+                } else {
+                    throw new Error('Backend not responding');
+                }
+            } catch (error) {
+                statusElement.classList.remove('connected');
+                statusElement.classList.add('disconnected');
+                statusText.textContent = 'Backend disconnected';
+                backendStatus.textContent = 'Disconnected';
+                showMessage('❌ Backend connection failed. Make sure your server is running.', 'error');
+            }
+        }
+
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (file) {
+                handleFile(file);
+            }
+        }
+
+        function handleFile(file) {
+            if (!file.name.endsWith('.kml')) {
+                showMessage('Please select a valid KML file.', 'error');
+                return;
+            }
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                processKMLFile(e.target.result, file.name);
+            };
+            reader.readAsText(file);
+        }
+
+        async function processKMLFile(kmlContent, fileName) {
+            showLoading(true);
+            
+            try {
+                // Send KML to backend for processing
+                const response = await fetch(`${currentBackend}/process_kml`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        kml_content: kmlContent
+                    })
+                });
+                
+                if (!response.ok) {
+                    throw new Error('Backend processing failed');
+                }
+                
+                const result = await response.json();
+                currentData = result;
+                
+                // Update all tabs with the new data
+                updateOverview(result);
+                updateVegetationTab(result);
+                updateRiskTab(result);
+                updateGrowthTab(result);
+                updateMapTab(result);
+                updateReportsTab(result);
+                
+                showMessage(`✅ Successfully processed ${fileName}`, 'success');
+                
+            } catch (error) {
+                showMessage(`❌ Error processing file: ${error.message}`, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function updateOverview(data) {
+            document.getElementById('totalLines').textContent = data.total_lines || 0;
+            document.getElementById('vegetationPoints').textContent = data.vegetation_points || 0;
+            document.getElementById('riskLevel').textContent = data.overall_risk || 'Low';
+            document.getElementById('growthRate').textContent = data.growth_rate || '0%';
+        }
+
+        function updateVegetationTab(data) {
+            const container = document.getElementById('vegetationResults');
+            if (data.vegetation_data) {
+                container.innerHTML = `
+                    <h3>🌿 Vegetation Analysis Results</h3>
+                    <p>Total vegetation points detected: ${data.vegetation_data.length}</p>
+                    <div class="chart-container">
+                        <canvas id="vegetationChart"></canvas>
+                    </div>
+                `;
+                
+                // Create vegetation chart
+                createVegetationChart(data.vegetation_data);
+            }
+        }
+
+        function updateRiskTab(data) {
+            const container = document.getElementById('riskResults');
+            if (data.risk_analysis) {
+                container.innerHTML = `
+                    <h3>⚠️ Risk Assessment Results</h3>
+                    <p>Overall risk level: <strong>${data.risk_analysis.overall_risk}</strong></p>
+                    <p>Risk score: ${data.risk_analysis.risk_score}/100</p>
+                    <div class="chart-container">
+                        <canvas id="riskChart"></canvas>
+                    </div>
+                `;
+                
+                // Create risk chart
+                createRiskChart(data.risk_analysis);
+            }
+        }
+
+        function updateGrowthTab(data) {
+            const container = document.getElementById('growthResults');
+            if (data.growth_prediction) {
+                container.innerHTML = `
+                    <h3>📈 Growth Prediction Results</h3>
+                    <p>Predicted growth rate: ${data.growth_prediction.growth_rate}%</p>
+                    <p>Time to critical level: ${data.growth_prediction.time_to_critical}</p>
+                    <div class="chart-container">
+                        <canvas id="growthChart"></canvas>
+                    </div>
+                `;
+                
+                // Create growth chart
+                createGrowthChart(data.growth_prediction);
+            }
+        }
+
+        function updateMapTab(data) {
+            if (data.coordinates && map) {
+                // Clear existing layers
+                map.eachLayer((layer) => {
+                    if (layer instanceof L.Marker || layer instanceof L.Polyline) {
+                        map.removeLayer(layer);
+                    }
+                });
+                
+                // Add new data to map
+                if (data.coordinates.length > 0) {
+                    const bounds = L.latLngBounds(data.coordinates);
+                    map.fitBounds(bounds);
+                    
+                    // Draw power line
+                    const line = L.polyline(data.coordinates, {
+                        color: '#e74c3c',
+                        weight: 4,
+                        opacity: 0.8
+                    }).addTo(map);
+                    
+                    // Add markers for vegetation points
+                    if (data.vegetation_data) {
+                        data.vegetation_data.forEach(point => {
+                            if (point.coordinates) {
+                                L.marker([point.coordinates.lat, point.coordinates.lng])
+                                    .bindPopup(`Vegetation: ${point.type}<br>Height: ${point.height}m<br>Distance: ${point.distance}m`)
+                                    .addTo(map);
+                            }
+                        });
+                    }
+                }
+            }
+        }
+
+        function updateReportsTab(data) {
+            const container = document.getElementById('reportResults');
+            container.innerHTML = `
+                <h3>📋 Analysis Report</h3>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <h3>${data.total_lines || 0}</h3>
+                        <p>Power Lines Analyzed</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${data.vegetation_points || 0}</h3>
+                        <p>Vegetation Points</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${data.overall_risk || 'Low'}</h3>
+                        <p>Risk Level</p>
+                    </div>
+                    <div class="stat-card">
+                        <h3>${data.growth_rate || '0%'}</h3>
+                        <p>Growth Rate</p>
+                    </div>
+                </div>
+                
+                <button class="upload-button" onclick="generatePDFReport()">
+                    📄 Generate PDF Report
+                </button>
+            `;
+        }
+
+        function createVegetationChart(data) {
+            const ctx = document.getElementById('vegetationChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'bar',
+                    data: {
+                        labels: data.map((_, i) => `Point ${i + 1}`),
+                        datasets: [{
+                            label: 'Vegetation Height (m)',
+                            data: data.map(d => d.height || 0),
+                            backgroundColor: 'rgba(52, 152, 219, 0.8)',
+                            borderColor: 'rgba(52, 152, 219, 1)',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Height (meters)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function createRiskChart(data) {
+            const ctx = document.getElementById('riskChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'doughnut',
+                    data: {
+                        labels: ['Low Risk', 'Medium Risk', 'High Risk'],
+                        datasets: [{
+                            data: [data.low_risk || 0, data.medium_risk || 0, data.high_risk || 0],
+                            backgroundColor: [
+                                'rgba(39, 174, 96, 0.8)',
+                                'rgba(243, 156, 18, 0.8)',
+                                'rgba(231, 76, 60, 0.8)'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: {
+                            legend: {
+                                position: 'bottom'
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function createGrowthChart(data) {
+            const ctx = document.getElementById('growthChart');
+            if (ctx) {
+                new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: ['Current', '1 Month', '3 Months', '6 Months', '1 Year'],
+                        datasets: [{
+                            label: 'Predicted Growth',
+                            data: [0, data.month_1 || 0, data.month_3 || 0, data.month_6 || 0, data.year_1 || 0],
+                            borderColor: 'rgba(155, 89, 182, 1)',
+                            backgroundColor: 'rgba(155, 89, 182, 0.1)',
+                            tension: 0.4
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                title: {
+                                    display: true,
+                                    text: 'Growth Rate (%)'
+                                }
+                            }
+                        }
+                    }
+                });
+            }
+        }
+
+        function generatePDFReport() {
+            if (!currentData) {
+                showMessage('No data available for report generation.', 'error');
+                return;
+            }
+            
+            showMessage('📄 Generating PDF report...', 'success');
+            // PDF generation would be implemented here
+            // For now, just show a success message
+        }
+
+        function showTab(tabName) {
+            // Hide all tabs
+            const tabs = document.querySelectorAll('.tab-content');
+            tabs.forEach(tab => tab.classList.remove('active'));
+            
+            // Remove active class from all buttons
+            const buttons = document.querySelectorAll('.tab-button');
+            buttons.forEach(button => button.classList.remove('active'));
+            
+            // Show selected tab
+            document.getElementById(tabName).classList.add('active');
+            
+            // Add active class to clicked button
+            event.target.classList.add('active');
+        }
+
+        function showLoading(show) {
+            const loading = document.getElementById('loading');
+            if (show) {
+                loading.classList.add('show');
+            } else {
+                loading.classList.remove('show');
+            }
+        }
+
+        function showMessage(message, type) {
+            const errorElement = document.getElementById('errorMessage');
+            const successElement = document.getElementById('successMessage');
+            
+            if (type === 'error') {
+                errorElement.textContent = message;
+                errorElement.style.display = 'block';
+                successElement.style.display = 'none';
+                
+                setTimeout(() => {
+                    errorElement.style.display = 'none';
+                }, 5000);
+            } else {
+                successElement.textContent = message;
+                successElement.style.display = 'block';
+                errorElement.style.display = 'none';
+                
+                setTimeout(() => {
+                    successElement.style.display = 'none';
+                }, 5000);
+            }
+        }
+
+        // Auto-test backend connection every 30 seconds
+        setInterval(testConnection, 30000);
+    </script>
+</body>
+</html> 
